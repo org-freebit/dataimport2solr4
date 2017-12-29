@@ -53,7 +53,7 @@ public class ApplicationListener implements ServletContextListener {
             // schedule the task
             ScheduledExecutorService fullImportExecutorService = new ScheduledThreadPoolExecutor(threadPoolCount, new BasicThreadFactory.Builder().namingPattern("fullImport-schedule-pool-%d").daemon(true).build());
 
-            fullImportExecutorService.scheduleAtFixedRate(task,60 * initialDelay,interval, TimeUnit.SECONDS);
+            fullImportExecutorService.scheduleAtFixedRate(fullImportTask,60 * initialDelay,interval, TimeUnit.SECONDS);
 
         } catch (Exception e) {
             if (e.getMessage().endsWith("disabled")) {
