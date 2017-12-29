@@ -1,6 +1,5 @@
 package org.apache.solr.handler.dataimport.scheduler;
 
-import java.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,8 +7,8 @@ public class DeltaImportHTTPPostScheduler extends BaseTimerTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(DeltaImportHTTPPostScheduler.class);
 
-	public DeltaImportHTTPPostScheduler(String webAppName, Timer t) throws Exception {
-		super(webAppName, t);
+	public DeltaImportHTTPPostScheduler(String webAppName) throws Exception {
+		super(webAppName);
 		logger.info("<index update process> DeltaImportHTTPPostScheduler init");
 	}
 
