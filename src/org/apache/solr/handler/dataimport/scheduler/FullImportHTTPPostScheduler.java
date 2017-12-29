@@ -19,7 +19,6 @@ public class FullImportHTTPPostScheduler extends BaseTimerTask {
                 } else if (this.syncCores.length != 0 && (this.syncCores.length != 1 || !this.syncCores[0].isEmpty())) {
                     String[] var4 = this.syncCores;
                     int var3 = this.syncCores.length;
-
                     for (int var2 = 0; var2 < var3; ++var2) {
                         String core = var4[var2];
                         this.prepUrlSendHttpPost(core, this.reBuildIndexParams);

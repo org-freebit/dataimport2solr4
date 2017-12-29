@@ -1,18 +1,17 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
 package org.apache.solr.handler.dataimport.scheduler;
+
+import org.apache.solr.core.SolrResourceLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
-import org.apache.solr.core.SolrResourceLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * @author shiyanwu
+ */
 public class SolrDataImportProperties {
 	private Properties properties;
 	public static final String SYNC_ENABLED = "syncEnabled";
@@ -28,32 +27,29 @@ public class SolrDataImportProperties {
 	public static final String INITIAL_DELAY = "initialDelay";
 	private static final Logger logger = LoggerFactory.getLogger(SolrDataImportProperties.class);
 
-	public SolrDataImportProperties() {
-	}
+    public void loadProperties(boolean force) {
+        try (SolrResourceLoader loader = new SolrResourceLoader((String) null)) {
 
-	public void loadProperties(boolean force) {
-		try {
-			SolrResourceLoader loader = new SolrResourceLoader((String)null);
-			logger.info("Instance dir = " + loader.getInstanceDir());
-			String configDir = loader.getConfigDir();
-			configDir = SolrResourceLoader.normalizeDir(configDir);
-			if (force || this.properties == null) {
-				this.properties = new Properties();
-				String dataImportPropertiesPath = configDir + "dataimport.properties";
-				FileInputStream fis = new FileInputStream(dataImportPropertiesPath);
-				this.properties.load(fis);
-			}
-		} catch (FileNotFoundException var6) {
-			logger.error("Error locating DataImportScheduler dataimport.properties file", var6);
-		} catch (IOException var7) {
-			logger.error("Error reading DataImportScheduler dataimport.properties file", var7);
-		} catch (Exception var8) {
-			logger.error("Error loading DataImportScheduler properties", var8);
-		}
+            logger.info("Instance dir = {}", loader.getInstanceDir());
+            String configDir = loader.getConfigDir();
+            configDir = SolrResourceLoader.normalizeDir(configDir);
+            if (force || this.properties == null) {
+                this.properties = new Properties();
+                String dataImportPropertiesPath = configDir + "dataimport.properties";
+                FileInputStream fis = new FileInputStream(dataImportPropertiesPath);
+                this.properties.load(fis);
+            }
+        } catch (FileNotFoundException var6) {
+            logger.error("Error locating DataImportScheduler dataimport.properties file", var6);
+        } catch (IOException var7) {
+            logger.error("Error reading DataImportScheduler dataimport.properties file", var7);
+        } catch (Exception var8) {
+            logger.error("Error loading DataImportScheduler properties", var8);
+        }
 
-	}
+    }
 
-	public String getProperty(String key) {
-		return this.properties.getProperty(key);
-	}
+    public String getProperty(String key) {
+        return this.properties.getProperty(key);
+    }
 }

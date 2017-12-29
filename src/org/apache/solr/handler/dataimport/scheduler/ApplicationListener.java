@@ -18,10 +18,12 @@ public class ApplicationListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
+
     }
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
+
         ServletContext servletContext = servletContextEvent.getServletContext();
         try {
             // 增量更新任务计划
@@ -29,8 +31,8 @@ public class ApplicationListener implements ServletContextListener {
             DeltaImportHTTPPostScheduler task = new DeltaImportHTTPPostScheduler(servletContext.getServletContextName());
 
             // get our interval from HTTPPostScheduler
-            int interval = task.getIntervalInt();
             int threadPoolCount = task.getThreadPoolCountInt();
+            long interval = task.getIntervalInt();
             long initialDelay = task.getInitialDelayInt();
 
             // schedule the task
@@ -42,6 +44,7 @@ public class ApplicationListener implements ServletContextListener {
             FullImportHTTPPostScheduler fullImportTask = new FullImportHTTPPostScheduler(servletContext.getServletContextName());
 
             int reBuildIndexInterval = fullImportTask.getReBuildIndexIntervalInt();
+
             if (reBuildIndexInterval <= 0) {
                 logger.warn("Full Import Schedule disabled");
                 return;

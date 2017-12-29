@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.TimerTask;
 
 public abstract class BaseTimerTask extends TimerTask {
+
     protected String syncEnabled;
     protected String[] syncCores;
     protected String server;
@@ -155,9 +156,9 @@ public abstract class BaseTimerTask extends TimerTask {
         }
     }
 
-    public int getIntervalInt() {
+    public long getIntervalInt() {
         try {
-            return Integer.parseInt(this.interval);
+            return Long.parseLong(this.interval);
         } catch (NumberFormatException var2) {
             logger.warn("Unable to convert 'interval' to number. Using default value (30) instead", var2);
             return 30;
