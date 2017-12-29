@@ -76,7 +76,7 @@ public abstract class BaseTimerTask {
             this.webapp = webAppName;
         }
 
-        if (this.interval == null || this.interval.isEmpty() || this.getIntervalInt() <= 0) {
+        if (this.interval == null || this.interval.isEmpty() || this.getIntervalLong() <= 0) {
             this.interval = "30";
         }
 
@@ -84,7 +84,7 @@ public abstract class BaseTimerTask {
             this.reBuildIndexBeginTime = "00:00:00";
         }
 
-        if (this.reBuildIndexInterval == null || this.reBuildIndexInterval.isEmpty() || this.getReBuildIndexIntervalInt() <= 0) {
+        if (this.reBuildIndexInterval == null || this.reBuildIndexInterval.isEmpty() || this.getReBuildIndexIntervalLong() <= 0) {
             this.reBuildIndexInterval = "0";
         }
 
@@ -134,21 +134,21 @@ public abstract class BaseTimerTask {
 
     }
 
-    public int getIntervalInt() {
+    public Long getIntervalLong() {
         try {
-            return Integer.parseInt(this.interval);
-        } catch (NumberFormatException var2) {
-            logger.warn("Unable to convert 'interval' to number. Using default value (30) instead", var2);
-            return 30;
+            return Long.parseLong(this.interval);
+        } catch (NumberFormatException numberFormatException) {
+            logger.warn("Unable to convert 'interval' to Long. Using default value (30L) instead", numberFormatException);
+            return 30L;
         }
     }
 
-    public int getReBuildIndexIntervalInt() {
+    public Long getReBuildIndexIntervalLong() {
         try {
-            return Integer.parseInt(this.reBuildIndexInterval);
-        } catch (NumberFormatException var2) {
-            logger.info("Unable to convert 'reBuildIndexInterval' to number. do't rebuild index.", var2);
-            return 0;
+            return Long.parseLong(this.reBuildIndexInterval);
+        } catch (NumberFormatException numberFormatException) {
+            logger.info("Unable to convert 'reBuildIndexInterval' to number. do't rebuild index.", numberFormatException);
+            return 300L;
         }
     }
 

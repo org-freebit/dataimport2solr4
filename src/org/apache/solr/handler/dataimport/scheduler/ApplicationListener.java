@@ -7,9 +7,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -58,10 +55,10 @@ public class ApplicationListener implements ServletContextListener {
                     servletContext.getServletContextName());
 
             // get our interval from HTTPPostScheduler
-            int interval = deltaImport.getIntervalInt();
+            Long interval = deltaImport.getIntervalLong();
 
             // schedule the task
-            deltaScheduledThreadPool.scheduleAtFixedRate(deltaImport, 1L * interval, 1000L * interval, TimeUnit.SECONDS);
+            deltaScheduledThreadPool.scheduleAtFixedRate(deltaImport, 60L * interval, interval, TimeUnit.SECONDS);
 
             // save the timer in context
             servletContext.setAttribute("deltaScheduledThreadPool", deltaScheduledThreadPool);
@@ -71,21 +68,15 @@ public class ApplicationListener implements ServletContextListener {
             FullImportHTTPPostScheduler fullImport = new FullImportHTTPPostScheduler(
                     servletContext.getServletContextName());
 
-            int reBuildIndexInterval = fullImport.getReBuildIndexIntervalInt();
+            Long reBuildIndexInterval = fullImport.getReBuildIndexIntervalLong();
             if (reBuildIndexInterval <= 0) {
                 logger.warn("Full Import Schedule disabled");
                 return;
             }
 
-            Calendar fullImportCalendar = Calendar.getInstance();
-            Date beginDate = fullImport.getReBuildIndexBeginTime();
-            fullImportCalendar.setTime(beginDate);
-            fullImportCalendar.add(Calendar.MINUTE, reBuildIndexInterval);
-            Date fullImportStartTime = fullImportCalendar.getTime();
-
             // schedule the task
             fullScheduledThreadPool.scheduleAtFixedRate(fullImport,
-                    1L * reBuildIndexInterval, 1000L * reBuildIndexInterval, TimeUnit.SECONDS);
+                    60L * reBuildIndexInterval, reBuildIndexInterval, TimeUnit.SECONDS);
 
             // save the timer in context
             servletContext.setAttribute("fullScheduledThreadPool", fullScheduledThreadPool);
