@@ -4,14 +4,18 @@ import java.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FullImportHTTPPostScheduler extends BaseTimerTask {
+/**
+ * @author shiyanwu
+ */
+public class FullImportHTTPPostScheduler extends BaseTimerTask implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(FullImportHTTPPostScheduler.class);
 
-	public FullImportHTTPPostScheduler(String webAppName, Timer t) throws Exception {
-		super(webAppName, t);
+	public FullImportHTTPPostScheduler(String webAppName) throws Exception {
+		super(webAppName);
 		logger.info("<index update process> DeltaImportHTTPPostScheduler init");
 	}
 
+	@Override
 	public void run() {
 		try {
 			if (!this.server.isEmpty() && !this.webapp.isEmpty() && this.reBuildIndexParams != null && !this.reBuildIndexParams.isEmpty()) {

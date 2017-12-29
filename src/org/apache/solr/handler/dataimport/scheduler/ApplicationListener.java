@@ -1,102 +1,103 @@
 package org.apache.solr.handler.dataimport.scheduler;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Timer;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+/**
+ * @author shiyanwu
+ */
 public class ApplicationListener implements ServletContextListener {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ApplicationListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationListener.class);
 
-	@Override
-	public void contextDestroyed(ServletContextEvent servletContextEvent) {
-		ServletContext servletContext = servletContextEvent.getServletContext();
+    @Override
+    public void contextDestroyed(ServletContextEvent servletContextEvent) {
+        //获取ServletContext
+        ServletContext servletContext = servletContextEvent.getServletContext();
 
-		// get our timer from the context
-		Timer timer = (Timer) servletContext.getAttribute("timer");
-		Timer fullImportTimer = (Timer) servletContext
-				.getAttribute("fullImportTimer");
+        // get our timer from the context
+        ScheduledExecutorService deltaScheduledThreadPool = (ScheduledExecutorService) servletContext.getAttribute("deltaScheduledThreadPool");
+        ScheduledExecutorService fullScheduledThreadPool = (ScheduledExecutorService) servletContext.getAttribute("fullScheduledThreadPool");
 
-		// cancel all active tasks in the timers queue
-		if (timer != null)
-			timer.cancel();
-		if (fullImportTimer != null)
-			fullImportTimer.cancel();
+        // cancel all active tasks in the timers queue
+        if (deltaScheduledThreadPool != null) {
+            deltaScheduledThreadPool.shutdown();
+        }
+        if (fullScheduledThreadPool != null) {
+            fullScheduledThreadPool.shutdown();
+        }
 
-		// remove the timer from the context
-		servletContext.removeAttribute("timer");
-		servletContext.removeAttribute("fullImportTimer");
+        // remove the timer from the context
+        servletContext.removeAttribute("deltaScheduledThreadPool");
+        servletContext.removeAttribute("fullScheduledThreadPool");
 
-	}
+    }
 
-	@Override
-	public void contextInitialized(ServletContextEvent servletContextEvent) {
-		ServletContext servletContext = servletContextEvent.getServletContext();
-		try {
-			// 增量更新任务计划
-			// create the timer and timer task objects
-			Timer timer = new Timer();
-			DeltaImportHTTPPostScheduler task = new DeltaImportHTTPPostScheduler(
-					servletContext.getServletContextName(), timer);
+    @Override
+    public void contextInitialized(ServletContextEvent servletContextEvent) {
+        /**
+         * 获取ServletContext
+         */
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        try {
+            // 增量更新任务计划
+            ScheduledExecutorService deltaScheduledThreadPool = new ScheduledThreadPoolExecutor(1, new BasicThreadFactory.Builder().namingPattern("deltaImport-schedule-pool-%d").daemon(true).build());
 
-			// get our interval from HTTPPostScheduler
-			int interval = task.getIntervalInt();
+            DeltaImportHTTPPostScheduler deltaImport = new DeltaImportHTTPPostScheduler(
+                    servletContext.getServletContextName());
 
-			// get a calendar to set the start time (first run)
-			Calendar calendar = Calendar.getInstance();
+            // get our interval from HTTPPostScheduler
+            int interval = deltaImport.getIntervalInt();
 
-			// set the first run to now + interval (to avoid fireing while the
-			// app/server is starting)
-			calendar.add(Calendar.MINUTE, interval);
-			Date startTime = calendar.getTime();
+            // schedule the task
+            deltaScheduledThreadPool.scheduleAtFixedRate(deltaImport, 1L * interval, 1000L * interval, TimeUnit.SECONDS);
 
-			// schedule the task
-			timer.scheduleAtFixedRate(task, startTime, 1000L * interval);
+            // save the timer in context
+            servletContext.setAttribute("deltaScheduledThreadPool", deltaScheduledThreadPool);
 
-			// save the timer in context
-			servletContext.setAttribute("timer", timer);
+            // 重做索引任务计划
+            ScheduledExecutorService fullScheduledThreadPool = new ScheduledThreadPoolExecutor(1, new BasicThreadFactory.Builder().namingPattern("fullImport-schedule-pool-%d").daemon(true).build());
+            FullImportHTTPPostScheduler fullImport = new FullImportHTTPPostScheduler(
+                    servletContext.getServletContextName());
 
-			// 重做索引任务计划
-			Timer fullImportTimer = new Timer();
-			FullImportHTTPPostScheduler fullImportTask = new FullImportHTTPPostScheduler(
-					servletContext.getServletContextName(), fullImportTimer);
+            int reBuildIndexInterval = fullImport.getReBuildIndexIntervalInt();
+            if (reBuildIndexInterval <= 0) {
+                logger.warn("Full Import Schedule disabled");
+                return;
+            }
 
-			int reBuildIndexInterval = fullImportTask
-					.getReBuildIndexIntervalInt();
-			if (reBuildIndexInterval <= 0) {
-				logger.warn("Full Import Schedule disabled");
-				return;
-			}
+            Calendar fullImportCalendar = Calendar.getInstance();
+            Date beginDate = fullImport.getReBuildIndexBeginTime();
+            fullImportCalendar.setTime(beginDate);
+            fullImportCalendar.add(Calendar.MINUTE, reBuildIndexInterval);
+            Date fullImportStartTime = fullImportCalendar.getTime();
 
-			Calendar fullImportCalendar = Calendar.getInstance();
-			Date beginDate = fullImportTask.getReBuildIndexBeginTime();
-			fullImportCalendar.setTime(beginDate);
-			fullImportCalendar.add(Calendar.MINUTE, reBuildIndexInterval);
-			Date fullImportStartTime = fullImportCalendar.getTime();
+            // schedule the task
+            fullScheduledThreadPool.scheduleAtFixedRate(fullImport,
+                    1L * reBuildIndexInterval, 1000L * reBuildIndexInterval, TimeUnit.SECONDS);
 
-			// schedule the task
-			fullImportTimer.scheduleAtFixedRate(fullImportTask,
-					fullImportStartTime, 1000L * reBuildIndexInterval);
+            // save the timer in context
+            servletContext.setAttribute("fullScheduledThreadPool", fullScheduledThreadPool);
 
-			// save the timer in context
-			servletContext.setAttribute("fullImportTimer", fullImportTimer);
+        } catch (Exception e) {
+            if (e.getMessage().endsWith("disabled")) {
+                logger.warn("Schedule disabled");
+            } else {
+                logger.error("Problem initializing the scheduled task: ", e);
+            }
+        }
 
-		} catch (Exception e) {
-			if (e.getMessage().endsWith("disabled")) {
-				logger.warn("Schedule disabled");
-			} else {
-				logger.error("Problem initializing the scheduled task: ", e);
-			}
-		}
-
-	}
+    }
 
 }
