@@ -11,6 +11,7 @@ public class FullImportHTTPPostScheduler extends BaseTimerTask {
         logger.info("<index update process> DeltaImportHTTPPostScheduler init");
     }
 
+    @Override
     public void run() {
         try {
             if (!this.server.isEmpty() && !this.webapp.isEmpty() && this.reBuildIndexParams != null && !this.reBuildIndexParams.isEmpty()) {

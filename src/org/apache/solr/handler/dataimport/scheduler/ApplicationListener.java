@@ -13,10 +13,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author shiyanwu yanzhongli
+ */
 public class ApplicationListener implements ServletContextListener {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(ApplicationListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationListener.class);
 
     @Override
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
