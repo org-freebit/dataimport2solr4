@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -32,13 +34,13 @@ public class ApplicationListener implements ServletContextListener {
 
             // get our interval from HTTPPostScheduler
             int threadPoolCount = task.getThreadPoolCountInt();
-            long interval = task.getIntervalInt();
-            long initialDelay = task.getInitialDelayInt();
+            long interval = task.getIntervalLong();
+            long initialDelay = task.getInitialDelayLong();
 
             // schedule the task
             ScheduledExecutorService deltaImportExecutorService = new ScheduledThreadPoolExecutor(threadPoolCount, new BasicThreadFactory.Builder().namingPattern("deltaImport-schedule-pool-%d").daemon(true).build());
 
-            deltaImportExecutorService.scheduleAtFixedRate(task,60 * initialDelay, interval, TimeUnit.SECONDS);
+            deltaImportExecutorService.scheduleAtFixedRate(task, 60 * initialDelay, interval, TimeUnit.SECONDS);
 
             // 重做索引任务计划
             FullImportHTTPPostScheduler fullImportTask = new FullImportHTTPPostScheduler(servletContext.getServletContextName());
@@ -50,10 +52,17 @@ public class ApplicationListener implements ServletContextListener {
                 return;
             }
 
+            Calendar fullImportCalendar = Calendar.getInstance();
+            Date beginDate = fullImportTask.getReBuildIndexBeginTime();
+            fullImportCalendar.setTime(beginDate);
+            fullImportCalendar.add(Calendar.MINUTE, reBuildIndexInterval);
+            long fullImportStartTimeMillis = fullImportCalendar.getTime().getTime();
+            long nowFullImportStartTimeMillis = System.currentTimeMillis();
+
             // schedule the task
             ScheduledExecutorService fullImportExecutorService = new ScheduledThreadPoolExecutor(threadPoolCount, new BasicThreadFactory.Builder().namingPattern("fullImport-schedule-pool-%d").daemon(true).build());
 
-            fullImportExecutorService.scheduleAtFixedRate(task,60 * initialDelay,interval, TimeUnit.SECONDS);
+            fullImportExecutorService.scheduleAtFixedRate(fullImportTask, fullImportStartTimeMillis - nowFullImportStartTimeMillis, 1000L * 60 * reBuildIndexInterval, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
             if (e.getMessage().endsWith("disabled")) {

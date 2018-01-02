@@ -52,19 +52,19 @@ public abstract class BaseTimerTask extends TimerTask {
 
     protected void reloadParams() {
         this.p.loadProperties(true);
-        this.syncEnabled = this.p.getProperty("syncEnabled");
-        this.cores = this.p.getProperty("syncCores");
-        this.server = this.p.getProperty("server");
-        this.port = this.p.getProperty("port");
-        this.webapp = this.p.getProperty("webapp");
-        this.params = this.p.getProperty("params");
-        this.interval = this.p.getProperty("interval");
-        this.syncCores = this.cores != null ? this.cores.split(",") : null;
-        this.reBuildIndexParams = this.p.getProperty("reBuildIndexParams");
-        this.reBuildIndexBeginTime = this.p.getProperty("reBuildIndexBeginTime");
-        this.reBuildIndexInterval = this.p.getProperty("reBuildIndexInterval");
-        this.initialDelay = this.p.getProperty("initialDelay");
-        this.threadPoolCount = this.p.getProperty("threadPoolCount");
+        this.syncEnabled = p.getProperty(SolrDataImportProperties.SYNC_ENABLED);
+        this.cores = p.getProperty(SolrDataImportProperties.SYNC_CORES);
+        this.server = p.getProperty(SolrDataImportProperties.SERVER);
+        this.port = p.getProperty(SolrDataImportProperties.PORT);
+        this.webapp = p.getProperty(SolrDataImportProperties.WEBAPP);
+        this.params = p.getProperty(SolrDataImportProperties.PARAMS);
+        this.interval = p.getProperty(SolrDataImportProperties.INTERVAL);
+        this.syncCores = cores != null ? this.cores.split(",") : null;
+        this.reBuildIndexParams = p.getProperty(SolrDataImportProperties.REBUILDINDEXPARAMS);
+        this.reBuildIndexBeginTime = p.getProperty(SolrDataImportProperties.REBUILDINDEXBEGINTIME);
+        this.reBuildIndexInterval = p.getProperty(SolrDataImportProperties.REBUILDINDEXINTERVAL);
+        this.initialDelay = p.getProperty(SolrDataImportProperties.INITIAL_DELAY);
+        this.threadPoolCount = p.getProperty(SolrDataImportProperties.THREAD_POOL_COUNT);
     }
 
     protected void fixParams(String webAppName) {
@@ -80,7 +80,7 @@ public abstract class BaseTimerTask extends TimerTask {
             this.webapp = webAppName;
         }
 
-        if (this.interval == null || this.interval.isEmpty() || this.getIntervalInt() <= 0) {
+        if (this.interval == null || this.interval.isEmpty() || this.getIntervalLong() <= 0) {
             this.interval = "30";
         }
 
@@ -138,15 +138,6 @@ public abstract class BaseTimerTask extends TimerTask {
 
     }
 
-    public long getInitialDelayInt() {
-        try {
-            return Long.parseLong(this.initialDelay);
-        } catch (NumberFormatException var2) {
-            logger.warn("Unable to convert 'initialDelay' to number. Using default value (10) instead", var2);
-            return 10L;
-        }
-    }
-
     public int getThreadPoolCountInt() {
         try {
             return Integer.parseInt(this.threadPoolCount);
@@ -156,11 +147,20 @@ public abstract class BaseTimerTask extends TimerTask {
         }
     }
 
-    public long getIntervalInt() {
+    public long getIntervalLong() {
         try {
             return Long.parseLong(this.interval);
         } catch (NumberFormatException var2) {
             logger.warn("Unable to convert 'interval' to number. Using default value (30) instead", var2);
+            return 30;
+        }
+    }
+
+    public long getInitialDelayLong() {
+        try {
+            return Long.parseLong(this.initialDelay);
+        } catch (NumberFormatException var2) {
+            logger.warn("Unable to convert 'initialDelay' to number. Using default value (30) instead", var2);
             return 30;
         }
     }
@@ -190,7 +190,6 @@ public abstract class BaseTimerTask extends TimerTask {
                     sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     beginDate = sdf.parse(this.reBuildIndexBeginTime);
                 }
-
                 return beginDate;
             } else {
                 return beginDate;

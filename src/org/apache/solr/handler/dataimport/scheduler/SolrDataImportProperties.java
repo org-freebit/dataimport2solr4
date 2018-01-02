@@ -25,6 +25,7 @@ public class SolrDataImportProperties {
 	public static final String REBUILDINDEXBEGINTIME = "reBuildIndexBeginTime";
 	public static final String REBUILDINDEXINTERVAL = "reBuildIndexInterval";
 	public static final String INITIAL_DELAY = "initialDelay";
+	public static final String THREAD_POOL_COUNT = "threadPoolCount";
 	private static final Logger logger = LoggerFactory.getLogger(SolrDataImportProperties.class);
 
     public void loadProperties(boolean force) {
